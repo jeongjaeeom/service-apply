@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders.AUTHORIZATION
 import org.springframework.http.MediaType
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
+import org.springframework.restdocs.payload.JsonFieldType
+import org.springframework.restdocs.payload.PayloadDocumentation
 import org.springframework.test.web.servlet.get
 
 @WebMvcTest(
@@ -46,6 +49,27 @@ internal class ApplicationFormRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(applicationFormResponse))) }
+        }.andDo {
+            handle(
+                    MockMvcRestDocumentation.document(
+                            "application-forms-read",
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                    PayloadDocumentation.fieldWithPath("body").type(JsonFieldType.OBJECT).description("지원서 정보")
+                            ).andWithPrefix("body.",
+                                    PayloadDocumentation.fieldWithPath("id").type(JsonFieldType.NUMBER).description("아이디"),
+                                    PayloadDocumentation.fieldWithPath("recruitmentId").type(JsonFieldType.NUMBER).description("모집 항목 아이디"),
+                                    PayloadDocumentation.fieldWithPath("referenceUrl").type(JsonFieldType.STRING).description("참고 URL"),
+                                    PayloadDocumentation.fieldWithPath("submitted").type(JsonFieldType.BOOLEAN).description("제출여부"),
+                                    PayloadDocumentation.fieldWithPath("answers").type(JsonFieldType.ARRAY).description("지원서 정보"),
+                                    PayloadDocumentation.fieldWithPath("answers.[].contents").type(JsonFieldType.STRING).description("지원서 내용"),
+                                    PayloadDocumentation.fieldWithPath("answers.[].recruitmentItemId").type(JsonFieldType.NUMBER).description("지원서 아이템 아이디"),
+                                    PayloadDocumentation.fieldWithPath("createdDateTime").type(JsonFieldType.STRING).description("생성 시간"),
+                                    PayloadDocumentation.fieldWithPath("modifiedDateTime").type(JsonFieldType.STRING).description("수정 시간"),
+                                    PayloadDocumentation.fieldWithPath("submittedDateTime").type(JsonFieldType.NULL).description("제출 시간")
+                            )
+                    )
+            )
         }
     }
 
@@ -59,6 +83,20 @@ internal class ApplicationFormRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(myApplicationFormResponses))) }
+        }.andDo {
+            handle(
+                    MockMvcRestDocumentation.document(
+                            "application-forms-me",
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                    PayloadDocumentation.fieldWithPath("body.[]").type(JsonFieldType.ARRAY).description("로그인한 지원자의 지원서 목록")
+                            ).andWithPrefix("body.[].", listOf(
+                                    PayloadDocumentation.fieldWithPath("recruitmentId").type(JsonFieldType.NUMBER).description("지원서 아이디"),
+                                    PayloadDocumentation.fieldWithPath("submitted").type(JsonFieldType.BOOLEAN).description("제출 여부")
+                                )
+                            )
+                    )
+            )
         }
     }
 
