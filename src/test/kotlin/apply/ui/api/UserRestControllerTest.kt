@@ -22,6 +22,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders.AUTHORIZATION
 import org.springframework.http.MediaType
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document
+import org.springframework.restdocs.payload.JsonFieldType
+import org.springframework.restdocs.payload.PayloadDocumentation
+import org.springframework.restdocs.request.RequestDocumentation
+import org.springframework.restdocs.request.RequestDocumentation.parameterWithName
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
@@ -118,6 +123,26 @@ internal class UserRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(VALID_TOKEN))) }
+        }.andDo {
+            handle(
+                    document(
+                            "user-register",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("name").type(JsonFieldType.STRING).description("이름"),
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("phoneNumber").type(JsonFieldType.STRING).description("전화번호"),
+                                    PayloadDocumentation.fieldWithPath("gender").type(JsonFieldType.STRING).description("성별"),
+                                    PayloadDocumentation.fieldWithPath("birthday").type(JsonFieldType.STRING).description("생년월일"),
+                                    PayloadDocumentation.fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호"),
+                                    PayloadDocumentation.fieldWithPath("confirmPassword").type(JsonFieldType.STRING).description("비밀번호 확인"),
+                                    PayloadDocumentation.fieldWithPath("authenticationCode").type(JsonFieldType.STRING).description("인증코드")
+                            ),
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                    PayloadDocumentation.fieldWithPath("body").type(JsonFieldType.STRING).description("토큰")
+                            )
+                    )
+            )
         }
     }
 
@@ -133,18 +158,43 @@ internal class UserRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(VALID_TOKEN))) }
+        }.andDo {
+            handle(
+                    document(
+                            "user-login",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호")
+                            ),
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                    PayloadDocumentation.fieldWithPath("body").type(JsonFieldType.STRING).description("토큰")
+                            )
+                    )
+            )
         }
     }
 
     @Test
     fun `잘못된 회원 로그인 요청에 응답으로 403 Forbidden을 반환한다`() {
-        every { userAuthenticationService.generateTokenByLogin(invalidUserLoginRequest) } throws UnidentifiedUserException()
+        every { userAuthenticationService.generateTokenByLogin(invalidUserLoginRequest) } throws
+                UnidentifiedUserException("사용자 정보가 일치하지 않습니다.")
 
         mockMvc.post("/api/users/login") {
             content = objectMapper.writeValueAsBytes(invalidUserLoginRequest.withPlainPassword(INVALID_PASSWORD))
             contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isForbidden }
+        }.andDo {
+            handle(
+                    document(
+                            "user-login-forbidden",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호")
+                            )
+                    )
+            )
         }
     }
 
@@ -157,18 +207,41 @@ internal class UserRestControllerTest : RestControllerTest() {
             contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isNoContent }
+        }.andDo {
+            handle(
+                    document(
+                            "user-reset-password",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("name").type(JsonFieldType.STRING).description("이름"),
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("birthday").type(JsonFieldType.STRING).description("생년월일")
+                            )
+                    )
+            )
         }
     }
 
     @Test
     fun `잘못된 비밀번호 찾기 요청에 응답으로 403 Forbidden을 반환한다`() {
-        every { userService.resetPassword(inValidUserPasswordFindRequest) } throws UnidentifiedUserException()
+        every { userService.resetPassword(inValidUserPasswordFindRequest) } throws
+                UnidentifiedUserException("사용자 정보가 일치하지 않습니다.")
 
         mockMvc.post("/api/users/reset-password") {
             content = objectMapper.writeValueAsBytes(inValidUserPasswordFindRequest)
             contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isForbidden }
+        }.andDo {
+            handle(
+                    document(
+                            "user-reset-password-forbidden",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("name").type(JsonFieldType.STRING).description("이름"),
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("birthday").type(JsonFieldType.STRING).description("생년월일")
+                            )
+                    )
+            )
         }
     }
 
@@ -184,12 +257,24 @@ internal class UserRestControllerTest : RestControllerTest() {
             header(AUTHORIZATION, "Bearer valid_token")
         }.andExpect {
             status { isNoContent }
+        }.andDo {
+            handle(
+                    document(
+                            "user-edit-password",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("oldPassword").type(JsonFieldType.STRING).description("기존 비밀번호"),
+                                    PayloadDocumentation.fieldWithPath("password").type(JsonFieldType.STRING).description("신규 비밀번호"),
+                                    PayloadDocumentation.fieldWithPath("confirmPassword").type(JsonFieldType.STRING).description("비밀번호 확인")
+                            )
+                    )
+            )
         }
     }
 
     @Test
     fun `잘못된 비밀번호 변경 요청에 응답으로 403 Forbidden을 반환한다`() {
-        every { userService.editPassword(any(), eq(inValidEditPasswordRequest)) } throws UnidentifiedUserException()
+        every { userService.editPassword(any(), eq(inValidEditPasswordRequest)) } throws
+                UnidentifiedUserException("기존 비밀번호가 일치하지 않습니다.")
 
         val actualInValidEditPasswordRequest = createInValidEditPasswordRequest()
 
@@ -199,6 +284,17 @@ internal class UserRestControllerTest : RestControllerTest() {
             header(AUTHORIZATION, "Bearer valid_token")
         }.andExpect {
             status { isForbidden }
+        }.andDo {
+            handle(
+                    document(
+                            "user-edit-password-forbidden",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("oldPassword").type(JsonFieldType.STRING).description("기존 비밀번호"),
+                                    PayloadDocumentation.fieldWithPath("password").type(JsonFieldType.STRING).description("신규 비밀번호"),
+                                    PayloadDocumentation.fieldWithPath("confirmPassword").type(JsonFieldType.STRING).description("비밀번호 확인")
+                            )
+                    )
+            )
         }
     }
 
@@ -212,6 +308,15 @@ internal class UserRestControllerTest : RestControllerTest() {
             param("email", authenticationCode.email)
         }.andExpect {
             status { isNoContent }
+        }.andDo {
+            handle(
+                    document(
+                            "user-authentication-code",
+                            RequestDocumentation.requestParameters(
+                                    parameterWithName("email").description("이메일")
+                            )
+                    )
+            )
         }
     }
 
@@ -224,6 +329,16 @@ internal class UserRestControllerTest : RestControllerTest() {
             param("authenticationCode", "code")
         }.andExpect {
             status { isNoContent }
+        }.andDo {
+            handle(
+                    document(
+                            "user-authenticate-email",
+                            RequestDocumentation.requestParameters(
+                                    parameterWithName("email").description("이메일"),
+                                    parameterWithName("authenticationCode").description("인증코드")
+                            )
+                    )
+            )
         }
     }
 
@@ -255,6 +370,23 @@ internal class UserRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(response))) }
+        }.andDo {
+            handle(
+                    document(
+                            "user-me",
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("메시지"),
+                                    PayloadDocumentation.fieldWithPath("body").type(JsonFieldType.OBJECT).description("유저정보")
+                            ).andWithPrefix("body.",
+                                    PayloadDocumentation.fieldWithPath("id").type(JsonFieldType.NUMBER).description("아이디"),
+                                    PayloadDocumentation.fieldWithPath("name").type(JsonFieldType.STRING).description("이름"),
+                                    PayloadDocumentation.fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
+                                    PayloadDocumentation.fieldWithPath("phoneNumber").type(JsonFieldType.STRING).description("전화번호"),
+                                    PayloadDocumentation.fieldWithPath("gender").type(JsonFieldType.STRING).description("성별"),
+                                    PayloadDocumentation.fieldWithPath("birthday").type(JsonFieldType.STRING).description("생년월일")
+                            )
+                    )
+            )
         }
     }
 
@@ -269,6 +401,15 @@ internal class UserRestControllerTest : RestControllerTest() {
             header(AUTHORIZATION, "Bearer valid_token")
         }.andExpect {
             status { isNoContent }
+        }.andDo {
+            handle(
+                    document(
+                            "user-information",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("phoneNumber").type(JsonFieldType.STRING).description("전화번호")
+                            )
+                    )
+            )
         }
     }
 
