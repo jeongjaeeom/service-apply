@@ -42,6 +42,7 @@ internal class ApplicationFormRestControllerTest : RestControllerTest() {
         mockMvc.get("/api/application-forms") {
             param("recruitmentId", "1")
             header(AUTHORIZATION, "Bearer valid_token")
+            contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(applicationFormResponse))) }
@@ -54,6 +55,7 @@ internal class ApplicationFormRestControllerTest : RestControllerTest() {
 
         mockMvc.get("/api/application-forms/me") {
             header(AUTHORIZATION, "Bearer valid_token")
+            contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(myApplicationFormResponses))) }
