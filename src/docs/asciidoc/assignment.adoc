@@ -1,9 +1,9 @@
-= ?? ?? API
-== ?? ??
+= 제출 관련 API
+== 과제 제출
 operation::assignment-submit[snippets='http-request,http-response']
 
-== ? ?? ??
+== 내 제출 조회
 operation::assignment-me[snippets='http-request,http-response']
 
-== ?? ?? ??
+== 제출 과제 수정
 operation::assignment-modify[snippets='http-request,http-response']
