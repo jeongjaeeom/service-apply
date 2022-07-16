@@ -12,7 +12,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
+import org.springframework.restdocs.payload.JsonFieldType
+import org.springframework.restdocs.payload.PayloadDocumentation
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import support.test.TestEnvironment
 
@@ -41,6 +45,17 @@ internal class AssignmentRestControllerTest : RestControllerTest() {
             header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
         }.andExpect {
             status { isOk }
+        }.andDo {
+            handle(
+                    MockMvcRestDocumentation.document(
+                            "assignment-submit",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("githubUsername").type(JsonFieldType.STRING).description("github 유저네임"),
+                                    PayloadDocumentation.fieldWithPath("pullRequestUrl").type(JsonFieldType.STRING).description("PR 링크"),
+                                    PayloadDocumentation.fieldWithPath("note").type(JsonFieldType.STRING).description("미션 소감")
+                            )
+                    )
+            )
         }
     }
 
@@ -59,6 +74,47 @@ internal class AssignmentRestControllerTest : RestControllerTest() {
         }.andExpect {
             status { isOk }
             content { json(objectMapper.writeValueAsString(ApiResponse.success(assignmentResponse))) }
+        }.andDo {
+            handle(
+                    MockMvcRestDocumentation.document(
+                            "assignment-me",
+                            PayloadDocumentation.responseFields(
+                                    PayloadDocumentation.fieldWithPath("message").type(JsonFieldType.STRING).description("message"),
+                                    PayloadDocumentation.fieldWithPath("body").type(JsonFieldType.OBJECT).description("body"),
+                                    PayloadDocumentation.fieldWithPath("body.githubUsername").type(JsonFieldType.STRING).description("github 유저네임"),
+                                    PayloadDocumentation.fieldWithPath("body.pullRequestUrl").type(JsonFieldType.STRING).description("PR 링크"),
+                                    PayloadDocumentation.fieldWithPath("body.note").type(JsonFieldType.STRING).description("미션 소감")
+                            )
+                    )
+            )
+        }
+    }
+
+    @Test
+    fun `과제 제출 내용을 수정한다`() {
+        every { assignmentService.update(any(), any(), createAssignmentRequest()) } just Runs
+
+        mockMvc.patch(
+                "/api/recruitments/{recruitmentId}/missions/{missionId}/assignments",
+                recruitmentId,
+                missionId
+        ) {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(createAssignmentRequest())
+            header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
+        }.andExpect {
+            status { isOk }
+        }.andDo {
+            handle(
+                    MockMvcRestDocumentation.document(
+                            "assignment-modify",
+                            PayloadDocumentation.requestFields(
+                                    PayloadDocumentation.fieldWithPath("githubUsername").type(JsonFieldType.STRING).description("github 유저네임"),
+                                    PayloadDocumentation.fieldWithPath("pullRequestUrl").type(JsonFieldType.STRING).description("PR 링크"),
+                                    PayloadDocumentation.fieldWithPath("note").type(JsonFieldType.STRING).description("미션 소감")
+                            )
+                    )
+            )
         }
     }
 
