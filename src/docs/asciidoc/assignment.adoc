@@ -1,0 +1,9 @@
+= ?? ?? API
+== ?? ??
+operation::assignment-submit[snippets='http-request,http-response']
+
+== ? ?? ??
+operation::assignment-me[snippets='http-request,http-response']
+
+== ?? ?? ??
+operation::assignment-modify[snippets='http-request,http-response']
