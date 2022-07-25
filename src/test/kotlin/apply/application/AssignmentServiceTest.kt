@@ -1,6 +1,10 @@
 package apply.application
 
-import apply.*
+import apply.createAssignment
+import apply.createAssignmentRequest
+import apply.createEvaluationTarget
+import apply.createMission
+import apply.createUser
 import apply.domain.assignment.AssignmentRepository
 import apply.domain.evaluationtarget.EvaluationStatus
 import apply.domain.evaluationtarget.EvaluationTargetRepository
